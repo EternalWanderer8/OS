@@ -10,15 +10,15 @@ public:
     std::vector<std::string> static ParseLine(std::istream& input, char separator = ';')
     {
         std::vector<std::string> result;
-        std::string transitionsLine;
-        std::string transition;
+        std::string valuesLine;
+        std::string value;
 
-        std::getline(input, transitionsLine);
-        std::istringstream transitionsLineInput(transitionsLine);
+        std::getline(input, valuesLine);
+        std::istringstream valuesLineInput(valuesLine);
 
-        while (std::getline(transitionsLineInput, transition, separator))
+        while (std::getline(valuesLineInput, value, separator))
         {
-            result.push_back(transition);
+            result.push_back(value);
         }
 
         return result;
