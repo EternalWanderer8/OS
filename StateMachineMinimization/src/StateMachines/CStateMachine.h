@@ -121,6 +121,11 @@ public:
         }
     }
 
+    Type getType() const
+    {
+        return type;
+    }
+
     std::vector<std::string> getAlphabet() const
     {
         return alphabet;
