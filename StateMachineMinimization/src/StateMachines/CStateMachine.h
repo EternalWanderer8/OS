@@ -1,6 +1,7 @@
 #pragma once
 #include "./CStateMachineTransition.h"
 #include "../Utils/CSVParser.h"
+#include <algorithm>
 #include <iostream>
 #include <utility>
 #include <vector>
@@ -64,6 +65,8 @@ public:
 
             rawTransitionsLine = CSVParser::ParseLine(input);
         }
+
+        eraseUnreachableTransitions();
     }
 
     CStateMachine(
@@ -141,6 +144,45 @@ public:
 private:
     static constexpr char ELEMENT_SEPARATOR = ';';
     static constexpr char SIGNAL_SEPARATOR = '/';
+
+    void eraseUnreachableTransitions()
+    {
+        std::vector<std::string> mentionedStates = {states[0]};
+
+        for (int i = 0; i < mentionedStates.size(); ++i)
+        {
+            int mentionedStateIndex = std::find(states.begin(), states.end(), mentionedStates[i]) - states.begin();
+
+            for (const TransitionsTableLine& transitionsLine : transitions)
+            {
+                std::string followingState = transitionsLine[mentionedStateIndex].state;
+
+                if (std::find(mentionedStates.begin(), mentionedStates.end(), followingState) == mentionedStates.end())
+                {
+                    mentionedStates.push_back(followingState);
+                }
+            }
+
+            if (mentionedStates.size() == states.size())
+            {
+                return;
+            }
+        }
+
+        for (int i = 0; i < states.size(); ++i)
+        {
+            if (std::find(mentionedStates.begin(), mentionedStates.end(), states[i]) == mentionedStates.end())
+            {
+                for (TransitionsTableLine& transitionsLine : transitions)
+                {
+                    transitionsLine.erase(std::next(transitionsLine.begin(), i));
+                }
+
+                states.erase(std::next(states.begin(), i));
+                i--;
+            }
+        }
+    }
 
     Type type;
     TransitionsTable transitions = {};
