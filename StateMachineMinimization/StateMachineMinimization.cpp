@@ -1,4 +1,5 @@
 #include "src/StateMachines/CStateMachine.h"
+#include "src/StateMachineMinimizer/CStateMachineMinimizer.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -83,6 +84,8 @@ int main(int argc, char** argv)
         CStateMachine stateMachine(input, args.type);
 
         stateMachine.save(std::cout);
+
+        CStateMachineMinimizer::minimizeStateMachine(stateMachine);
 
         return 0;
     }
