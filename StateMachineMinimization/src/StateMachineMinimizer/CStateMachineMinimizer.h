@@ -14,7 +14,6 @@ public:
         std::vector<std::string> states = machine.getStates();
 
         std::vector<CEquivalentClass> prevEqClasses = {};
-        std::vector<CEquivalentClass> currEqClasses = {};
 
         for (int i = 0; i < states.size(); ++i)
         {
@@ -35,25 +34,48 @@ public:
                 stateSignals.push_back(signals[i]);
             }
 
-            auto prevEqClassesIterator = std::find_if(
-                prevEqClasses.begin(),
-                prevEqClasses.end(),
-                [&stateSignals](const CEquivalentClass& eqClass){
-                    return eqClass.signals == stateSignals;
-                }
-            );
+            linkStateToEqClass(prevEqClasses, stateSignals, states[i]);
+        }
 
-            if (prevEqClassesIterator == prevEqClasses.end())
+        while (true)
+        {
+            std::vector<CEquivalentClass> currEqClasses = {};
+
+            for (int i = 0; i < states.size(); ++i)
             {
-                CEquivalentClass eqClass;
-                eqClass.signals = stateSignals;
-                eqClass.ownStates.insert(states[i]);
-                prevEqClasses.push_back(eqClass);
+                std::vector<std::string> prevEqClassesSignals = {};
+
+                for (const CStateMachine::TransitionsTableLine& transitionsLine : transitions)
+                {
+                    std::string transition = transitionsLine[i].state;
+
+                    int prevEqClassIndex = std::find_if(
+                            prevEqClasses.begin(),
+                            prevEqClasses.end(),
+                            [&transition](const CEquivalentClass& prevEqClass)
+                            {
+                                return std::find_if(
+                                        prevEqClass.ownStates.begin(),
+                                        prevEqClass.ownStates.end(),
+                                        [&transition](const std::string& state) {
+                                            return state == transition;
+                                        }
+                                ) != prevEqClass.ownStates.end();
+                            }
+                    ) - prevEqClasses.begin();
+
+                    prevEqClassesSignals.push_back(std::to_string(prevEqClassIndex));
+                }
+
+                linkStateToEqClass(currEqClasses, prevEqClassesSignals, states[i]);
             }
-            else
+
+            if (isEqClassesIterationsEqual(prevEqClasses, currEqClasses))
             {
-                prevEqClassesIterator->ownStates.insert(states[i]);
+                break;
             }
+
+            prevEqClasses = currEqClasses;
         }
 
         int i = 0;
@@ -79,5 +101,59 @@ public:
         }
 
         return machine;
+    }
+private:
+    static void linkStateToEqClass(
+        std::vector<CEquivalentClass>& eqClasses,
+        const std::vector<std::string>& newEqClassSignals,
+        const std::string& state
+    ) {
+        auto eqClassesIterator = std::find_if(
+            eqClasses.begin(),
+            eqClasses.end(),
+            [&newEqClassSignals](const CEquivalentClass& eqClass){
+                return eqClass.signals == newEqClassSignals;
+            }
+        );
+
+        if (eqClassesIterator == eqClasses.end())
+        {
+            CEquivalentClass eqClass;
+            eqClass.signals = newEqClassSignals;
+            eqClass.ownStates.insert(state);
+            eqClasses.push_back(eqClass);
+        }
+        else
+        {
+            eqClassesIterator->ownStates.insert(state);
+        }
+    }
+
+    static bool isEqClassesIterationsEqual(
+        const std::vector<CEquivalentClass>& prevEqClasses,
+        const std::vector<CEquivalentClass>& currEqClasses
+    ) {
+        if (currEqClasses.size() != prevEqClasses.size())
+        {
+            return false;
+        }
+
+        for (const CEquivalentClass& currEqClass : currEqClasses)
+        {
+            auto prevEqClassesIterator = std::find_if(
+                prevEqClasses.begin(),
+                prevEqClasses.end(),
+                [&currEqClass](const CEquivalentClass& prevEqClass) {
+                    return currEqClass.ownStates == prevEqClass.ownStates;
+                }
+            );
+
+            if (prevEqClassesIterator == prevEqClasses.end())
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 };
