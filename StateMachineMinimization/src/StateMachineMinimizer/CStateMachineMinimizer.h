@@ -100,7 +100,9 @@ public:
             i++;
         }
 
-        return machine;
+        std::cout << std::endl;
+
+        return constructMinimizedStateMachine(prevEqClasses, machine);
     }
 private:
     static void linkStateToEqClass(
@@ -155,5 +157,84 @@ private:
         }
 
         return true;
+    }
+
+    static CStateMachine constructMinimizedStateMachine(
+            const std::vector<CEquivalentClass>& finalEqClasses,
+            const CStateMachine& machine
+    ) {
+        CStateMachine::TransitionsTable transitions = machine.getTransitions();
+        std::vector<std::string> signals = machine.getSignals();
+        std::vector<std::string> states = machine.getStates();
+        CStateMachine::Type machineType = machine.getType();
+
+        std::string newStateChar = states[0].substr(0, 1) == "q" ? "S" : "q";
+
+        CStateMachine::TransitionsTable newTransitions(transitions.size());
+        std::vector<std::string> newSignals = {};
+        std::vector<std::string> newStates = {};
+
+        for (int i = 0; i < finalEqClasses.size(); ++i)
+        {
+            newStates.push_back(newStateChar + std::to_string(i));
+
+            int oldStateIndex = std::find(
+                states.begin(),
+                states.end(),
+                *finalEqClasses[i].ownStates.begin()
+            ) - states.begin();
+
+            if (machineType == CStateMachine::Type::MOORE)
+            {
+                newSignals.push_back(signals[oldStateIndex]);
+            }
+
+            for (int j = 0; j < transitions.size(); ++j)
+            {
+                std::string oldTransition = transitions[j][oldStateIndex].state;
+
+                std::cout << "old state at line " << j << " column (state) " << oldStateIndex << " " << oldTransition << std::endl;
+
+                int ownEqClassIndex = std::find_if(
+                    finalEqClasses.begin(),
+                    finalEqClasses.end(),
+                    [&oldTransition](const CEquivalentClass& eqClass) {
+                        return std::find_if(
+                            eqClass.ownStates.begin(),
+                            eqClass.ownStates.end(),
+                            [&oldTransition](const std::string& state){
+                                return state == oldTransition;
+                            }
+                        ) != eqClass.ownStates.end();
+                    }
+                ) - finalEqClasses.begin();
+
+                std::cout << "state owned by " << ownEqClassIndex << " eqClass " << std::endl;
+
+                CStateMachineTransition newTransition;
+                newTransition.state = newStateChar + std::to_string(ownEqClassIndex);
+
+                if (machineType == CStateMachine::Type::MEALY)
+                {
+                    newTransition.signal = transitions[j][oldStateIndex].signal.has_value()
+                        ? transitions[j][oldStateIndex].signal.value()
+                        : "";
+                }
+                else
+                {
+                    newTransition.signal = std::nullopt;
+                }
+
+                newTransitions[j].push_back(newTransition);
+            }
+        }
+
+        return {
+            machineType,
+            std::move(machine.getAlphabet()),
+            std::move(newSignals),
+            std::move(newStates),
+            std::move(newTransitions)
+        };
     }
 };

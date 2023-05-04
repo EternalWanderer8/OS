@@ -85,7 +85,13 @@ int main(int argc, char** argv)
 
         stateMachine.save(std::cout);
 
-        CStateMachineMinimizer::minimizeStateMachine(stateMachine);
+        std::cout << std::endl;
+
+        CStateMachine minimizedMachine = CStateMachineMinimizer::minimizeStateMachine(stateMachine);
+
+        std::cout << std::endl;
+
+        minimizedMachine.save(std::cout);
 
         return 0;
     }
