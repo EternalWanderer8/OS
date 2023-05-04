@@ -78,30 +78,6 @@ public:
             prevEqClasses = currEqClasses;
         }
 
-        int i = 0;
-
-        for (const CEquivalentClass& eqClass : prevEqClasses)
-        {
-            std::cout << "EqClass" << i << ':' << std::endl;
-
-            std::cout << "signals: ";
-            for (const std::string& signal : eqClass.signals)
-            {
-                std::cout << signal << ", ";
-            }
-
-            std::cout << std::endl << "ownStates: ";
-            for (const std::string& state : eqClass.ownStates)
-            {
-                std::cout << state << ", ";
-            }
-
-            std::cout << std::endl;
-            i++;
-        }
-
-        std::cout << std::endl;
-
         return constructMinimizedStateMachine(prevEqClasses, machine);
     }
 private:
@@ -193,8 +169,6 @@ private:
             {
                 std::string oldTransition = transitions[j][oldStateIndex].state;
 
-                std::cout << "old state at line " << j << " column (state) " << oldStateIndex << " " << oldTransition << std::endl;
-
                 int ownEqClassIndex = std::find_if(
                     finalEqClasses.begin(),
                     finalEqClasses.end(),
@@ -208,8 +182,6 @@ private:
                         ) != eqClass.ownStates.end();
                     }
                 ) - finalEqClasses.begin();
-
-                std::cout << "state owned by " << ownEqClassIndex << " eqClass " << std::endl;
 
                 CStateMachineTransition newTransition;
                 newTransition.state = newStateChar + std::to_string(ownEqClassIndex);
