@@ -41,6 +41,42 @@ public:
         {
             std::vector<CEquivalentClass> currEqClasses = {};
 
+            for (const CEquivalentClass& eqClass : prevEqClasses)
+            {
+                std::vector<CEquivalentClass> devidedEqClasses = {};
+
+                for (const std::string& state : eqClass.ownStates)
+                {
+                    std::vector<std::string> prevEqClassesSignals = {};
+
+                    for (const CStateMachine::TransitionsTableLine& transitionsLine : transitions)
+                    {
+                        int transitionIndex = std::find(states.begin(), states.end(), state) - states.begin();
+
+                        std::string transition = transitionsLine[transitionIndex].state;
+
+                        int prevEqClassIndex = std::find_if(
+                            prevEqClasses.begin(),
+                            prevEqClasses.end(),
+                            [&transition](const CEquivalentClass& prevEqClass)
+                            {
+                                return std::find(
+                                        prevEqClass.ownStates.begin(),
+                                        prevEqClass.ownStates.end(),
+                                        transition
+                                ) != prevEqClass.ownStates.end();
+                            }
+                        ) - prevEqClasses.begin();
+
+                        prevEqClassesSignals.push_back(std::to_string(prevEqClassIndex));
+                    }
+
+                    linkStateToEqClass(devidedEqClasses, prevEqClassesSignals, state);
+                }
+
+                prevEqClasses.insert(prevEqClasses.end(), devidedEqClasses.begin(), devidedEqClasses.end());
+            }
+
             for (int i = 0; i < states.size(); ++i)
             {
                 std::vector<std::string> prevEqClassesSignals = {};
@@ -50,18 +86,16 @@ public:
                     std::string transition = transitionsLine[i].state;
 
                     int prevEqClassIndex = std::find_if(
-                            prevEqClasses.begin(),
-                            prevEqClasses.end(),
-                            [&transition](const CEquivalentClass& prevEqClass)
-                            {
-                                return std::find_if(
-                                        prevEqClass.ownStates.begin(),
-                                        prevEqClass.ownStates.end(),
-                                        [&transition](const std::string& state) {
-                                            return state == transition;
-                                        }
-                                ) != prevEqClass.ownStates.end();
-                            }
+                        prevEqClasses.begin(),
+                        prevEqClasses.end(),
+                        [&transition](const CEquivalentClass& prevEqClass)
+                        {
+                            return std::find(
+                                prevEqClass.ownStates.begin(),
+                                prevEqClass.ownStates.end(),
+                                transition
+                            ) != prevEqClass.ownStates.end();
+                        }
                     ) - prevEqClasses.begin();
 
                     prevEqClassesSignals.push_back(std::to_string(prevEqClassIndex));
@@ -173,12 +207,10 @@ private:
                     finalEqClasses.begin(),
                     finalEqClasses.end(),
                     [&oldTransition](const CEquivalentClass& eqClass) {
-                        return std::find_if(
+                        return std::find(
                             eqClass.ownStates.begin(),
                             eqClass.ownStates.end(),
-                            [&oldTransition](const std::string& state){
-                                return state == oldTransition;
-                            }
+                            oldTransition
                         ) != eqClass.ownStates.end();
                     }
                 ) - finalEqClasses.begin();
