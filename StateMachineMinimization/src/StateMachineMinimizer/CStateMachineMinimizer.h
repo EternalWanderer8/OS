@@ -61,9 +61,9 @@ public:
                             [&transition](const CEquivalentClass& prevEqClass)
                             {
                                 return std::find(
-                                        prevEqClass.ownStates.begin(),
-                                        prevEqClass.ownStates.end(),
-                                        transition
+                                    prevEqClass.ownStates.begin(),
+                                    prevEqClass.ownStates.end(),
+                                    transition
                                 ) != prevEqClass.ownStates.end();
                             }
                         ) - prevEqClasses.begin();
