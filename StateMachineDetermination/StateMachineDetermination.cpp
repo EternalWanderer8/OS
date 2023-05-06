@@ -19,8 +19,8 @@ Args parseArgs(int argc, char** argv)
 
     Args args;
 
-    args.inputFileName = argv[2];
-    args.outputFileName = argv[3];
+    args.inputFileName = argv[1];
+    args.outputFileName = argv[2];
 
     return args;
 }
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 
         std::ifstream input = getInput(args.inputFileName);
 
-        CStateMachine stateMachine(input, CStateMachine::Type::MOORE);
+        CStateMachine stateMachine(input);
 
         stateMachine.save(std::cout);
 

@@ -3,6 +3,7 @@
 #include "../Utils/CSVParser.h"
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 #include <utility>
 #include <vector>
 
@@ -12,26 +13,14 @@ public:
     using TransitionsTableLine = std::vector<CStateMachineTransition>;
     using TransitionsTable = std::vector<TransitionsTableLine>;
 
-    enum class Type
+    explicit CStateMachine(std::istream& input)
     {
-        MEALY,
-        MOORE
-    };
-
-    CStateMachine(std::istream& input, Type type)
-    {
-        this->type = type;
         std::vector<std::string> rawTransitionsHeader = CSVParser::ParseLine(input);
         rawTransitionsHeader.erase(rawTransitionsHeader.begin());
+        signals = rawTransitionsHeader;
 
-        if (type == Type::MOORE)
-        {
-            signals = rawTransitionsHeader;
-
-            rawTransitionsHeader = CSVParser::ParseLine(input);
-            rawTransitionsHeader.erase(rawTransitionsHeader.begin());
-        }
-
+        rawTransitionsHeader = CSVParser::ParseLine(input);
+        rawTransitionsHeader.erase(rawTransitionsHeader.begin());
         states = rawTransitionsHeader;
 
         std::vector<std::string> rawTransitionsLine = CSVParser::ParseLine(input);
@@ -41,22 +30,19 @@ public:
             rawTransitionsLine.erase(rawTransitionsLine.begin());
             TransitionsTableLine transitionsLine = {};
 
-            for (const std::string& transition: rawTransitionsLine)
+            for (const std::string& compoundTransition: rawTransitionsLine)
             {
+                std::istringstream cts(compoundTransition);
+                std::set<std::string> transitionStates = {};
+                std::string state;
+
+                while (std::getline(cts, state, STATE_SEPARATOR))
+                {
+                    transitionStates.insert(state);
+                }
+
                 CStateMachineTransition parsedTransition;
-
-                if (type == Type::MEALY && !transition.empty())
-                {
-                    size_t signalSeparatorPos = transition.find(SIGNAL_SEPARATOR);
-
-                    parsedTransition.state = transition.substr(0, signalSeparatorPos);
-                    parsedTransition.signal = transition.substr(signalSeparatorPos + 1, transition.length());
-                }
-                else
-                {
-                    parsedTransition.signal = std::nullopt;
-                    parsedTransition.state = transition;
-                }
+                parsedTransition.states = transitionStates;
 
                 transitionsLine.push_back(parsedTransition);
             }
@@ -65,19 +51,15 @@ public:
 
             rawTransitionsLine = CSVParser::ParseLine(input);
         }
-
-        eraseUnreachableTransitions();
     }
 
     CStateMachine(
-        Type type,
         std::vector<std::string>&& alphabet,
         std::vector<std::string>&& signals,
         std::vector<std::string>&& states,
         TransitionsTable&& transitions
     )
-        : type(type)
-        , states(states)
+        : states(states)
         , signals(signals)
         , alphabet(alphabet)
         , transitions(transitions)
@@ -86,7 +68,7 @@ public:
 
     void save(std::ostream& output) const
     {
-        if (type == Type::MOORE)
+        if (!signals.empty())
         {
             for (const std::string& signal : signals)
             {
@@ -109,21 +91,19 @@ public:
 
             for (const CStateMachineTransition& transition : transitions[i])
             {
-                output << ELEMENT_SEPARATOR << transition.state;
-
-                if (transition.signal.has_value())
+                output << ELEMENT_SEPARATOR;
+                for (const std::string& state : transition.states)
                 {
-                    output << SIGNAL_SEPARATOR << transition.signal.value();
+                    if (state != *transition.states.begin())
+                    {
+                        output << STATE_SEPARATOR;
+                    }
+                    output << state;
                 }
             }
 
             output << std::endl;
         }
-    }
-
-    Type getType() const
-    {
-        return type;
     }
 
     std::vector<std::string> getAlphabet() const
@@ -148,48 +128,8 @@ public:
 
 private:
     static constexpr char ELEMENT_SEPARATOR = ';';
-    static constexpr char SIGNAL_SEPARATOR = '/';
+    static constexpr char STATE_SEPARATOR = ',';
 
-    void eraseUnreachableTransitions()
-    {
-        std::vector<std::string> mentionedStates = {states[0]};
-
-        for (int i = 0; i < mentionedStates.size(); ++i)
-        {
-            int mentionedStateIndex = std::find(states.begin(), states.end(), mentionedStates[i]) - states.begin();
-
-            for (const TransitionsTableLine& transitionsLine : transitions)
-            {
-                std::string followingState = transitionsLine[mentionedStateIndex].state;
-
-                if (std::find(mentionedStates.begin(), mentionedStates.end(), followingState) == mentionedStates.end())
-                {
-                    mentionedStates.push_back(followingState);
-                }
-            }
-
-            if (mentionedStates.size() == states.size())
-            {
-                return;
-            }
-        }
-
-        for (int i = 0; i < states.size(); ++i)
-        {
-            if (std::find(mentionedStates.begin(), mentionedStates.end(), states[i]) == mentionedStates.end())
-            {
-                for (TransitionsTableLine& transitionsLine : transitions)
-                {
-                    transitionsLine.erase(std::next(transitionsLine.begin(), i));
-                }
-
-                states.erase(std::next(states.begin(), i));
-                i--;
-            }
-        }
-    }
-
-    Type type;
     TransitionsTable transitions = {};
     std::vector<std::string> states = {};
     std::vector<std::string> signals = {};

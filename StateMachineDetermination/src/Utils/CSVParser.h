@@ -21,6 +21,11 @@ public:
             result.push_back(value);
         }
 
+        if (*valuesLine.rbegin() == separator)
+        {
+            result.emplace_back("");
+        }
+
         return result;
     }
 };
