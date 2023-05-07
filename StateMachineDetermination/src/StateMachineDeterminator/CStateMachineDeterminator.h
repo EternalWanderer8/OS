@@ -66,15 +66,6 @@ public:
 
                 CStateMachineTransition compoundTransition;
 
-                std::cout << "from state ";
-
-                for (auto& state : uniqueCompoundStates[i].states)
-                {
-                    std::cout << state << ", ";
-                }
-
-                std::cout << "by symbol " << alphabet[inputSymbolIndex] << ": ";
-
                 for (const std::string& state : uniqueCompoundStates[i].states)
                 {
                     int stateIndex = std::find(
@@ -107,13 +98,6 @@ public:
                         }
                     }
                 }
-
-                for (auto& state : compoundTransition.states)
-                {
-                    std::cout << state << ", ";
-                }
-
-                std::cout << std::endl;
 
                 if (!compoundTransition.states.empty())
                 {
@@ -273,11 +257,6 @@ private:
                     states.end(),
                     state
             ) - states.begin();
-
-//            std::cout << "state: " << state << ", ";
-//            std::cout << "index: " << originalTransitionStateIndex << ", ";
-//            std::cout << "signal: " << signals[originalTransitionStateIndex] << ", ";
-//            std::cout << std::endl;
 
             if (signals[originalTransitionStateIndex] == FINAL_SIGNAL)
             {
