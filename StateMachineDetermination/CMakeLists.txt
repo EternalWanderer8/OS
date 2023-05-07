@@ -11,4 +11,4 @@ add_executable(StateMachineDetermination
         src/StateMachines/CStateMachine.h
         src/StateMachines/CStateMachineTransition.h
         src/Utils/CSVParser.h
-        StateMachineDetermination.cpp)
+        StateMachineDetermination.cpp src/StateMachineDeterminator/CStateMachineDeterminator.h)

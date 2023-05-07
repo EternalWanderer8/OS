@@ -1,3 +1,4 @@
+#include "src/StateMachineDeterminator/CStateMachineDeterminator.h"
 #include "src/StateMachines/CStateMachine.h"
 #include <iostream>
 #include <fstream>
@@ -67,6 +68,8 @@ int main(int argc, char** argv)
         CStateMachine stateMachine(input);
 
         stateMachine.save(std::cout);
+
+        CStateMachine determinedMachine = CStateMachineDeterminator::determineStateMachine(stateMachine);
 
         return 0;
     }
