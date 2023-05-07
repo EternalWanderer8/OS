@@ -11,6 +11,10 @@ public:
     static CStateMachine determineStateMachine(const CStateMachine& machine)
     {
         std::unordered_map<std::string, CStateMachineTransition> ecloses = getEcloses(machine);
+        CStateMachine::TransitionsTable transitions = machine.getTransitions();
+        std::vector<std::string> alphabet = machine.getAlphabet();
+        std::vector<std::string> signals = machine.getSignals();
+        std::vector<std::string> states = machine.getStates();
 
         for (auto& eclose : ecloses)
         {
@@ -27,7 +31,134 @@ public:
             std::cout << std::endl;
         }
 
-        return machine;
+        std::cout << std::endl;
+
+        CStateMachine::TransitionsTable determinedTransitions(alphabet.size());
+        std::vector<CStateMachineTransition> uniqueCompoundStates= {};
+        std::string newStateChar = states[0][0] == 'S' ? "A" : "S";
+
+        if (!ecloses.empty())
+        {
+            for (const auto& eclose : ecloses)
+            {
+                uniqueCompoundStates.push_back(eclose.second);
+            }
+        }
+        else
+        {
+            CStateMachineTransition firstOriginalState;
+            firstOriginalState.states.insert(states[0]);
+            if (signals[0] == FINAL_SIGNAL)
+            {
+                firstOriginalState.signal = FINAL_SIGNAL;
+            }
+            uniqueCompoundStates.push_back(firstOriginalState);
+        }
+
+        for (int i = 0; i < uniqueCompoundStates.size(); ++i)
+        {
+            for (int inputSymbolIndex = 0; inputSymbolIndex < alphabet.size(); ++inputSymbolIndex)
+            {
+                if (alphabet[inputSymbolIndex] == EMPTY_SYMBOL)
+                {
+                    continue;
+                }
+
+                CStateMachineTransition compoundTransition;
+
+                std::cout << "from state ";
+
+                for (auto& state : uniqueCompoundStates[i].states)
+                {
+                    std::cout << state << ", ";
+                }
+
+                std::cout << "by symbol " << alphabet[inputSymbolIndex] << ": ";
+
+                for (const std::string& state : uniqueCompoundStates[i].states)
+                {
+                    int stateIndex = std::find(
+                        states.begin(),
+                        states.end(),
+                        state
+                    ) - states.begin();
+
+                    CStateMachineTransition originalTransition = transitions[inputSymbolIndex][stateIndex];
+
+                    for (const std::string& originalTransitionState : originalTransition.states)
+                    {
+                        if (originalTransitionState.empty())
+                        {
+                            continue;
+                        }
+
+                        auto eclosesIterator = ecloses.find(originalTransitionState);
+
+                        if (eclosesIterator != ecloses.end())
+                        {
+                            for (const std::string& ecloseState : eclosesIterator->second.states)
+                            {
+                                insertStateIntoCompoundTransition(compoundTransition, ecloseState, states, signals);
+                            }
+                        }
+                        else
+                        {
+                            insertStateIntoCompoundTransition(compoundTransition, originalTransitionState, states, signals);
+                        }
+                    }
+                }
+
+                for (auto& state : compoundTransition.states)
+                {
+                    std::cout << state << ", ";
+                }
+
+                std::cout << std::endl;
+
+                if (!compoundTransition.states.empty())
+                {
+                    auto uniqueStatesIterator = std::find(
+                        uniqueCompoundStates.begin(),
+                        uniqueCompoundStates.end(),
+                        compoundTransition
+                    );
+
+                    if (uniqueStatesIterator == uniqueCompoundStates.end())
+                    {
+                        uniqueCompoundStates.push_back(compoundTransition);
+                        compoundTransition.states = { newStateChar + std::to_string(uniqueCompoundStates.size())};
+                    }
+                    else
+                    {
+                        compoundTransition.states = { newStateChar + std::to_string(uniqueStatesIterator - uniqueCompoundStates.begin())};
+                    }
+                }
+
+                determinedTransitions[inputSymbolIndex].push_back(compoundTransition);
+            }
+        }
+
+        std::vector<std::string> newSignals = {};
+        std::vector<std::string> newStates = {};
+
+        for (int i = 0; i < uniqueCompoundStates.size(); ++i)
+        {
+            newStates.push_back(newStateChar + std::to_string(i));
+            newSignals.push_back(uniqueCompoundStates[i].signal.has_value() ? FINAL_SIGNAL : "");
+        }
+
+        alphabet.erase(std::find(
+            alphabet.begin(),
+            alphabet.end(),
+            EMPTY_SYMBOL
+        ));
+
+        return {
+            std::move(alphabet),
+            std::move(newSignals),
+            std::move(newStates),
+            std::move(determinedTransitions)
+        };
     }
 
 private:
@@ -59,8 +190,11 @@ private:
 
         for (const std::string& emptyTransition : emptyTransitions)
         {
-            if (std::find(compoundTransition.states.begin(), compoundTransition.states.end(), emptyTransition) == compoundTransition.states.end())
-            {
+            if (!emptyTransition.empty() && std::find(
+                compoundTransition.states.begin(),
+                compoundTransition.states.end(),
+                emptyTransition) == compoundTransition.states.end()
+            ) {
                 compoundTransition.states.insert(emptyTransition);
                 getEmptyTransitionState(machine, compoundTransition, emptyTransition);
             }
@@ -82,7 +216,7 @@ private:
             }
         }
 
-        for (const std::string& state : machine.getStates())
+        for (const std::string& state : states)
         {
             CStateMachineTransition compoundTransition;
             compoundTransition.states.insert(state);
@@ -114,5 +248,39 @@ private:
         }
 
         return ecloses;
+    }
+
+    static void insertStateIntoCompoundTransition(
+        CStateMachineTransition& compoundTransition,
+        const std::string& state,
+        const std::vector<std::string>& states,
+        const std::vector<std::string>& signals
+    ) {
+        if (std::find(
+            compoundTransition.states.begin(),
+            compoundTransition.states.end(),
+            state) == compoundTransition.states.end()
+        ) {
+            compoundTransition.states.insert(state);
+        }
+
+        if (!compoundTransition.signal.has_value())
+        {
+            int originalTransitionStateIndex = std::find(
+                    states.begin(),
+                    states.end(),
+                    state
+            ) - states.begin();
+
+//            std::cout << "state: " << state << ", ";
+//            std::cout << "index: " << originalTransitionStateIndex << ", ";
+//            std::cout << "signal: " << signals[originalTransitionStateIndex] << ", ";
+//            std::cout << std::endl;
+
+            if (signals[originalTransitionStateIndex] == FINAL_SIGNAL)
+            {
+                compoundTransition.signal = FINAL_SIGNAL;
+            }
+        }
     }
 };

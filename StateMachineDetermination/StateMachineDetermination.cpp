@@ -69,7 +69,11 @@ int main(int argc, char** argv)
 
         stateMachine.save(std::cout);
 
+        std::cout << std::endl;
+
         CStateMachine determinedMachine = CStateMachineDeterminator::determineStateMachine(stateMachine);
+
+        determinedMachine.save(std::cout);
 
         return 0;
     }
