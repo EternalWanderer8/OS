@@ -16,23 +16,6 @@ public:
         std::vector<std::string> signals = machine.getSignals();
         std::vector<std::string> states = machine.getStates();
 
-        for (auto& eclose : ecloses)
-        {
-            std::cout << eclose.first << ": ";
-
-            for (auto& state : eclose.second.states) {
-                std::cout << state << ", ";
-            }
-
-            if (eclose.second.signal.has_value() && eclose.second.signal.value() == FINAL_SIGNAL)
-            {
-                std::cout << "Final" << std::endl;
-            }
-            std::cout << std::endl;
-        }
-
-        std::cout << std::endl;
-
         CStateMachine::TransitionsTable determinedTransitions(alphabet.size());
         std::vector<CStateMachineTransition> uniqueCompoundStates= {};
         std::string newStateChar = states[0][0] == 'S' ? "A" : "S";
@@ -253,9 +236,9 @@ private:
         if (!compoundTransition.signal.has_value())
         {
             int originalTransitionStateIndex = std::find(
-                    states.begin(),
-                    states.end(),
-                    state
+                states.begin(),
+                states.end(),
+                state
             ) - states.begin();
 
             if (signals[originalTransitionStateIndex] == FINAL_SIGNAL)
