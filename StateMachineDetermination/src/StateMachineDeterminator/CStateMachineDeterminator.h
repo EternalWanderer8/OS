@@ -153,6 +153,8 @@ public:
             EMPTY_SYMBOL
         ));
 
+        writeDeterminedTransitionsCard(std::cout, uniqueCompoundStates, newStateChar);
+
         return {
             std::move(alphabet),
             std::move(newSignals),
@@ -282,5 +284,22 @@ private:
                 compoundTransition.signal = FINAL_SIGNAL;
             }
         }
+    }
+
+    static void writeDeterminedTransitionsCard(
+        std::ostream& output,
+        const std::vector<CStateMachineTransition>& compoundStates,
+        const std::string& newStateChar
+    ) {
+        for (int i = 0; i < compoundStates.size(); ++i)
+        {
+            output << newStateChar << i << " =";
+            for (const std::string& state : compoundStates[i].states)
+            {
+                output << " " + state;
+            }
+            output << std::endl;
+        }
+        output << std::endl;
     }
 };
