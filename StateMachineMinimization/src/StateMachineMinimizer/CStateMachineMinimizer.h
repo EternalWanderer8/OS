@@ -74,34 +74,7 @@ public:
                     linkStateToEqClass(devidedEqClasses, prevEqClassesSignals, state);
                 }
 
-                prevEqClasses.insert(prevEqClasses.end(), devidedEqClasses.begin(), devidedEqClasses.end());
-            }
-
-            for (int i = 0; i < states.size(); ++i)
-            {
-                std::vector<std::string> prevEqClassesSignals = {};
-
-                for (const CStateMachine::TransitionsTableLine& transitionsLine : transitions)
-                {
-                    std::string transition = transitionsLine[i].state;
-
-                    int prevEqClassIndex = std::find_if(
-                        prevEqClasses.begin(),
-                        prevEqClasses.end(),
-                        [&transition](const CEquivalentClass& prevEqClass)
-                        {
-                            return std::find(
-                                prevEqClass.ownStates.begin(),
-                                prevEqClass.ownStates.end(),
-                                transition
-                            ) != prevEqClass.ownStates.end();
-                        }
-                    ) - prevEqClasses.begin();
-
-                    prevEqClassesSignals.push_back(std::to_string(prevEqClassIndex));
-                }
-
-                linkStateToEqClass(currEqClasses, prevEqClassesSignals, states[i]);
+                currEqClasses.insert(currEqClasses.end(), devidedEqClasses.begin(), devidedEqClasses.end());
             }
 
             if (isEqClassesIterationsEqual(prevEqClasses, currEqClasses))
