@@ -8,6 +8,8 @@
 class CGrammarParser
 {
 public:
+    static inline std::string EDGE_STATE = "H";
+
     enum class GrammarSide
     {
         RIGHT,
@@ -39,7 +41,6 @@ public:
 private:
     static constexpr char GRAMMAR_TRANSITION_SEPARATOR = '|';
     static inline std::string FINAL_SIGNAL = "F";
-    static inline std::string EDGE_STATE = "H";
 
     static void parseGrammarRule(
         std::istream& grammarRule,

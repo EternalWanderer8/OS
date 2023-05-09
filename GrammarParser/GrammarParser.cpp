@@ -1,3 +1,4 @@
+#include "src/StateMachineDeterminator/CStateMachineDeterminator.h"
 #include "src/StateMachines/CStateMachine.h"
 #include "GrammarParser/CGrammarParser.h"
 #include <iostream>
@@ -81,10 +82,13 @@ int main(int argc, char** argv)
         Args args = parseArgs(argc, argv);
 
         std::ifstream input = getInput(args.inputFileName);
+        std::ofstream output = getOutput(args.outputFileName);
 
         CStateMachine stateMachine = CGrammarParser::parseGrammar(input, args.grammarSide);
 
-        stateMachine.save(std::cout);
+        CStateMachine determinedMachine = CStateMachineDeterminator::determineStateMachine(stateMachine, args.grammarSide);
+
+        determinedMachine.save(output);
 
         return 0;
     }
