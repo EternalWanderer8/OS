@@ -1,14 +1,15 @@
 #pragma once
 #include <optional>
 #include <string>
+#include <set>
 
 struct CStateMachineTransition
 {
-    std::string state;
-    std::optional<std::string> signal;
+    std::set<std::string> states = {};
+    std::optional<std::string> signal = std::nullopt;
 
     bool operator==(const CStateMachineTransition& transition) const
     {
-        return (state == transition.state) && (signal == transition.signal);
+        return (states == transition.states) && (signal == transition.signal);
     }
 };

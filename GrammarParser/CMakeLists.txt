@@ -8,7 +8,8 @@ include_directories(src/StateMachines)
 include_directories(src/Utils)
 
 add_executable(GrammarParser
-        src/StateMachines/CStateMachine.h
         src/StateMachines/CStateMachineTransition.h
-        src/Utils/CSVParser.h
+        src/GrammarParser/CGrammarParser.h
+        src/StateMachines/CStateMachine.h
+        src/Utils/CStrings.h
         GrammarParser.cpp)

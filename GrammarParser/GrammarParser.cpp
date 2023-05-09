@@ -1,4 +1,5 @@
 #include "src/StateMachines/CStateMachine.h"
+#include "GrammarParser/CGrammarParser.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -6,7 +7,7 @@
 
 struct Args
 {
-    std::string grammarSide;
+    CGrammarParser::GrammarSide grammarSide;
     std::string outputFileName;
     std::string inputFileName;
 };
@@ -16,20 +17,26 @@ Args parseArgs(int argc, char** argv)
     std::string const LEFT_SIDE_GRAMMAR_STR = "left";
     std::string const RIGHT_SIDE_GRAMMAR_STR = "right";
 
+    const std::map<std::string, CGrammarParser::GrammarSide> SIDE_MAP = {
+        {RIGHT_SIDE_GRAMMAR_STR, CGrammarParser::GrammarSide::RIGHT},
+        {LEFT_SIDE_GRAMMAR_STR, CGrammarParser::GrammarSide::LEFT}
+    };
+
     if (argc != 4)
     {
         throw std::invalid_argument("Wrong arguments count specified. Should be:\n"
-                                    "StateMachineMinimization mealy <input file> <output file> or\n"
-                                    "StateMachineMinimization moore <input file> <output file>");
+                                    "StateMachineMinimization left <input file> <output file> or\n"
+                                    "StateMachineMinimization right <input file> <output file>");
     }
 
     Args args;
 
-    if (argv[1] != LEFT_SIDE_GRAMMAR_STR || argv[1] != RIGHT_SIDE_GRAMMAR_STR)
+    auto it = SIDE_MAP.find(argv[1]);
+    if (it == SIDE_MAP.end())
     {
         throw std::invalid_argument("Wrong state machine type specified");
     }
-    args.grammarSide = argv[1];
+    args.grammarSide = it->second;
     args.inputFileName = argv[2];
     args.outputFileName = argv[3];
 
@@ -75,7 +82,7 @@ int main(int argc, char** argv)
 
         std::ifstream input = getInput(args.inputFileName);
 
-        CStateMachine stateMachine(input, CStateMachine::Type::MOORE);
+        CStateMachine stateMachine = CGrammarParser::parseGrammar(input, args.grammarSide);
 
         stateMachine.save(std::cout);
 
