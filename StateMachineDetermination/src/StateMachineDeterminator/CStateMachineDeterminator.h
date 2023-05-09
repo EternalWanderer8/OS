@@ -10,11 +10,18 @@ class CStateMachineDeterminator
 public:
     static CStateMachine determineStateMachine(const CStateMachine& machine)
     {
-        std::unordered_map<std::string, CStateMachineTransition> ecloses = getEcloses(machine);
         CStateMachine::TransitionsTable transitions = machine.getTransitions();
         std::vector<std::string> alphabet = machine.getAlphabet();
         std::vector<std::string> signals = machine.getSignals();
         std::vector<std::string> states = machine.getStates();
+
+        const bool isEmptySymbolExist = std::find(alphabet.begin(), alphabet.end(), EMPTY_SYMBOL) != alphabet.end();
+        std::unordered_map<std::string, CStateMachineTransition> ecloses = {};
+
+        if (isEmptySymbolExist)
+        {
+            ecloses = getEcloses(machine);
+        }
 
         CStateMachine::TransitionsTable determinedTransitions(alphabet.size());
         std::vector<CStateMachineTransition> uniqueCompoundStates= {};
@@ -114,11 +121,14 @@ public:
             newSignals.push_back(uniqueCompoundStates[i].signal.has_value() ? FINAL_SIGNAL : "");
         }
 
-        alphabet.erase(std::find(
-            alphabet.begin(),
-            alphabet.end(),
-            EMPTY_SYMBOL
-        ));
+        if (isEmptySymbolExist)
+        {
+            alphabet.erase(std::find(
+                alphabet.begin(),
+                alphabet.end(),
+                EMPTY_SYMBOL
+            ));
+        }
 
         writeDeterminedTransitionsCard(std::cout, uniqueCompoundStates, newStateChar);
 
